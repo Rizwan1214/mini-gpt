@@ -28,6 +28,7 @@ class Config:
     n_layers: int = 4  # kitne transformer blocks
     dropout: float = 0.1  # training mein random neurons band: ratta lagane se rokta hai
     vocab_size: int = 0  # data se bharta hai
+    use_attention: bool = True  # False = attention hata do (experiment: iske baghair kya hota hai?)
 
 
 class CausalSelfAttention(nn.Module):
@@ -62,8 +63,10 @@ class Block(nn.Module):
 
     def __init__(self, cfg: Config):
         super().__init__()
-        self.ln1 = nn.LayerNorm(cfg.d_model)
-        self.attn = CausalSelfAttention(cfg)
+        self.use_attention = cfg.use_attention
+        if cfg.use_attention:  # attention ke baghair wale experiment mein ye parameters bante hi nahi
+            self.ln1 = nn.LayerNorm(cfg.d_model)
+            self.attn = CausalSelfAttention(cfg)
         self.ln2 = nn.LayerNorm(cfg.d_model)
         self.mlp = nn.Sequential(
             nn.Linear(cfg.d_model, 4 * cfg.d_model),
@@ -73,7 +76,8 @@ class Block(nn.Module):
         )
 
     def forward(self, x):
-        x = x + self.attn(self.ln1(x))  # residual: purani info bachi rehti hai
+        if self.use_attention:
+            x = x + self.attn(self.ln1(x))  # residual: purani info bachi rehti hai
         x = x + self.mlp(self.ln2(x))
         return x
 
@@ -126,6 +130,35 @@ def estimate_loss(model, data, cfg, batch_size, device, iters=50):
     return out
 
 
+def train_model(cfg: Config, data: CharData, steps: int, lr: float = 1e-3, batch: int = 32,
+                eval_every: int = 250, seed: int = 1337, device: str | None = None, verbose: bool = True):
+    """Ek model train karo. Wapas deta hai: (model, log [(step, train, val)], seconds)."""
+    torch.manual_seed(seed)
+    device = device or pick_device()
+    model = GPT(cfg).to(device)
+    opt = torch.optim.AdamW(model.parameters(), lr=lr)
+
+    log = []
+    start = time.time()
+    for step in range(steps + 1):
+        if step % eval_every == 0 or step == steps:
+            est = estimate_loss(model, data, cfg, batch, device)
+            log.append((step, est["train"], est["val"]))
+            if verbose:
+                print(f"step {step:5d}  train {est['train']:.3f}  val {est['val']:.3f}  ({time.time() - start:.0f}s)")
+        if step == steps:
+            break
+
+        # Training ka asli loop: batch -> forward -> loss -> backward -> update
+        x, y = data.get_batch("train", batch, cfg.block_size, device)
+        _, loss = model(x, y)
+        opt.zero_grad(set_to_none=True)
+        loss.backward()
+        opt.step()
+
+    return model, log, time.time() - start
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--steps", type=int, default=3000)
@@ -135,31 +168,14 @@ def main():
     ap.add_argument("--out", default="model.pt")
     args = ap.parse_args()
 
-    torch.manual_seed(1337)
     data = CharData()
     device = pick_device()
     cfg = Config(vocab_size=data.vocab_size)
-    model = GPT(cfg).to(device)
-    opt = torch.optim.AdamW(model.parameters(), lr=args.lr)
-
-    n_params = sum(p.numel() for p in model.parameters())
+    n_params = sum(p.numel() for p in GPT(cfg).parameters())
     print(f"{n_params / 1e6:.2f}M parameters | vocab {data.vocab_size} | device {device}")
     print(f"config: {asdict(cfg)}")
 
-    log = []
-    start = time.time()
-    for step in range(args.steps + 1):
-        if step % args.eval_every == 0:
-            est = estimate_loss(model, data, cfg, args.batch, device)
-            log.append((step, est["train"], est["val"]))
-            print(f"step {step:5d}  train {est['train']:.3f}  val {est['val']:.3f}  ({time.time() - start:.0f}s)")
-
-        # Training ka asli loop: batch -> forward -> loss -> backward -> update
-        x, y = data.get_batch("train", args.batch, cfg.block_size, device)
-        _, loss = model(x, y)
-        opt.zero_grad(set_to_none=True)
-        loss.backward()
-        opt.step()
+    model, log, _ = train_model(cfg, data, args.steps, args.lr, args.batch, args.eval_every, device=device)
 
     torch.save({"config": asdict(cfg), "model": model.state_dict(), "chars": data.chars}, args.out)
     with open("losses.csv", "w", newline="") as f:

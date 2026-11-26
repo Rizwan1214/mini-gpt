@@ -17,7 +17,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from data import CharData, pick_device
+from data import TextData, pick_device
 
 
 @dataclass
@@ -130,7 +130,7 @@ def estimate_loss(model, data, cfg, batch_size, device, iters=50):
     return out
 
 
-def train_model(cfg: Config, data: CharData, steps: int, lr: float = 1e-3, batch: int = 32,
+def train_model(cfg: Config, data: TextData, steps: int, lr: float = 1e-3, batch: int = 32,
                 eval_every: int = 250, seed: int = 1337, device: str | None = None, verbose: bool = True):
     """Ek model train karo. Wapas deta hai: (model, log [(step, train, val)], seconds)."""
     torch.manual_seed(seed)
@@ -166,24 +166,26 @@ def main():
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--eval-every", type=int, default=250)
     ap.add_argument("--out", default="model.pt")
+    ap.add_argument("--tokenizer", default="char", help="char, bpe512 (apna BPE, vocab 512), ya gpt2")
     args = ap.parse_args()
 
-    data = CharData()
+    data = TextData(args.tokenizer)
     device = pick_device()
     cfg = Config(vocab_size=data.vocab_size)
     n_params = sum(p.numel() for p in GPT(cfg).parameters())
-    print(f"{n_params / 1e6:.2f}M parameters | vocab {data.vocab_size} | device {device}")
+    print(f"{n_params / 1e6:.2f}M parameters | tokenizer {args.tokenizer} (vocab {data.vocab_size}, "
+          f"{data.val_chars_per_token:.2f} chars/token) | device {device}")
     print(f"config: {asdict(cfg)}")
 
     model, log, _ = train_model(cfg, data, args.steps, args.lr, args.batch, args.eval_every, device=device)
 
-    torch.save({"config": asdict(cfg), "model": model.state_dict(), "chars": data.chars}, args.out)
+    torch.save({"config": asdict(cfg), "model": model.state_dict(), "tokenizer": data.tokenizer.to_dict()}, args.out)
     with open("losses.csv", "w", newline="") as f:
         csv.writer(f).writerows([("step", "train", "val"), *log])
     print(f"\nSaved {args.out} and losses.csv")
 
     model.eval()
-    idx = torch.tensor([data.encode("\n")], device=device)
+    idx = torch.tensor([data.encode("\n")[:1]], device=device)
     print("\n--- GPT sample ---")
     print(data.decode(model.generate(idx, 500, temperature=0.8)[0].tolist()))
 

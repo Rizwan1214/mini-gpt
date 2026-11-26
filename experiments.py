@@ -21,7 +21,7 @@ import statistics
 from dataclasses import replace
 from pathlib import Path
 
-from data import CharData, pick_device
+from data import TextData, pick_device
 from gpt import GPT, Config, train_model
 
 OUT = Path(__file__).parent / "experiments"
@@ -96,7 +96,7 @@ def main():
 
     out = args.out_dir
     out.mkdir(parents=True, exist_ok=True)
-    data = CharData()
+    data = TextData()
     device = pick_device()
     base = Config(vocab_size=data.vocab_size)
     seeds = [BASE_SEED + k for k in range(args.seeds)]

@@ -11,6 +11,8 @@ Ye seekhne ke liye hai: har line ke saath Roman Urdu comments hain.
 | `bigram.py` | Step 1: sab se simple model, attention ke baghair. Iska loss baseline hai |
 | `gpt.py` | Step 2: asli transformer (embeddings → 4 blocks [LayerNorm → causal multi-head attention → MLP, residuals] → logits) aur training loop |
 | `sample.py` | Trained `model.pt` se text likhwana |
+| `tokenization.py` | Tokenizers: character, apna seekha hua BPE (shuru se), aur GPT-2 ka asli tokenizer. `python3 tokenization.py` BPE ke merges dikhata hai |
+| `compare_tokenizers.py` | Same model ko 5 tokenizers ke saath train karke muqabla |
 | `experiments.py` | Hyperparameters badal kar kai models train karna aur compare karna (table + chart, `--seeds` se shor bhi naapta hai) |
 | `data/input.txt` | Tiny Shakespeare (~1.1 MB), [karpathy/char-rnn](https://github.com/karpathy/char-rnn) se |
 
@@ -21,6 +23,7 @@ pip install -r requirements.txt
 python3 bigram.py            # baseline, ~5 second
 python3 gpt.py               # GPT training, 3000 steps
 python3 sample.py --prompt "ROMEO:" --temp 0.8
+python3 gpt.py --tokenizer bpe1024   # BPE tokens ke saath train karo
 ```
 
 Mac par khud Apple GPU (`mps`) use hota hai, NVIDIA par `cuda`, warna CPU.
@@ -84,6 +87,42 @@ Poori table: [`experiments/seeds/results.md`](experiments/seeds/results.md).
 - `no_dropout` aur `layers_6` ka faida asli hai: shor se kai guna bada.
 - `lr_high` ka nuksaan ek seed par +0.040 dikha tha, lekin 3 seeds ka average sirf +0.020 hai, jo shor ke andar hai.
   Seekh: **ek run se nateeja mat nikalo.** Asli research mein isi liye kai seeds chalaye jaate hain.
+
+## Tokenizers: character vs BPE vs GPT-2
+
+`python3 tokenization.py` apna BPE seekhta hai aur merges dikhata hai. Pehle merges hain `' ' + 't'`, `'h' + 'e'`, phir
+`' t' + 'he' -> ' the'`. Yani wo khud dhoondta hai ke English mein kaunse tukre sab se aam hain.
+
+Ek sentence (57 characters) har tokenizer mein:
+
+- **char** (57 tokens): `R|O|M|E|O|:| |B|u|t| |s|o|f|t|,| …`
+- **bpe1024** (22 tokens): `ROMEO|:| |But| so|ft|,| what| li|ght| thr|ough| y|ond|er| w|ind|ow| bre|ak|s|?`
+- **gpt2** (14 tokens): `ROM|EO|:| But| soft|,| what| light| through| y|onder| window| breaks|?`
+
+Mazedaar baat: hamare BPE ne `ROMEO` ko ek token banaya, kyunki is text mein wo bohat aata hai. GPT-2 ne internet
+par seekha tha, is liye uske liye `ROMEO` nadir hai lekin ` through` aur ` window` aam hain.
+
+`python3 compare_tokenizers.py`: same model (4 layers, d=128, context 64 *tokens*), 1500 steps, sirf tokenizer alag.
+Poori report aur har model ka likha hua text: [`experiments/tokenizers/results.md`](experiments/tokenizers/results.md).
+
+| Tokenizer | Vocab | Params | Embeddings ka hissa | Chars/token | Context (chars) | Val loss / token | **Val loss / char** | Waqt |
+|---|---|---|---|---|---|---|---|---|
+| `char` | 65 | 0.82M | 2% | 1.00 | ~64 | 1.770 | **1.770** | 32s |
+| `bpe256` | 256 | 0.87M | 8% | 1.78 | ~114 | 2.941 | **1.649** | 31s |
+| `bpe512` | 512 | 0.93M | 14% | 2.06 | ~132 | 3.304 | **1.607** | 30s |
+| `bpe1024` | 1024 | 1.06M | 25% | 2.32 | ~148 | 3.647 | **1.572** | 31s |
+| `gpt2` | 50,257 | 13.72M | 94% | 3.09 | ~198 | 4.817 | **1.557** | 608s |
+
+Seekh:
+
+1. **"Per token" loss se dhoka mat khao.** GPT-2 ka 4.817 char ke 1.770 se bura lagta hai, lekin uska har token
+   ~3 characters ka hai. Insaaf se compare karne ke liye loss ko characters per token se taqseem karo.
+2. **Bada vocab = behtar per-character loss** (1.770 → 1.557). Har token mein zyada maana hota hai, aur
+   64 tokens ka context ~64 ki jagah ~198 characters dekh leta hai.
+3. **Lekin qeemat hai.** GPT-2 vocab mein model ka 94% sirf embedding table hai, aur 50,257 words par softmax
+   training ko ~20 guna dheema (608s) kar deta hai. Faida bpe1024 se sirf 0.015 hai, jo ek seed par shor bhi ho sakta hai.
+   Chhote data aur model ke liye ~1000 tokens wala BPE sab se acha sauda hai.
+4. BPE models naam bhi tukron se jod kar banate hain (jaise `CAMARGUMBILKE`): naya token nahi, purane tukre naye tareeqe se.
 
 ## Apne experiments
 

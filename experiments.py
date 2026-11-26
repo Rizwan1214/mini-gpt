@@ -17,6 +17,7 @@ aur har experiment ki <naam>.csv (seeds ka average).
 
 import argparse
 import csv
+import math
 import statistics
 from dataclasses import replace
 from pathlib import Path
@@ -47,7 +48,9 @@ def write_svg(runs: list[dict], path: Path) -> None:
     W, H, l, r, t, b = 760, 420, 52, 190, 20, 40
     max_step = max(s for run in runs for s, _, _ in run["log"])
     vals = [v for run in runs for _, _, v in run["log"]]
-    lo, hi = 1.4, max(min(max(vals), 4.5), 2.0)
+    # Neeche ki hadd 1.4, lekin data us se neeche jaye (jaise fine-tuning ~1.2) to aur neeche
+    lo = min(1.4, math.floor((min(vals) - 0.05) * 10) / 10)
+    hi = max(min(max(vals), 4.5), 2.0)
     x = lambda s: l + s / max_step * (W - l - r)
     y = lambda v: t + (hi - min(max(v, lo), hi)) / (hi - lo) * (H - t - b)
 
@@ -59,7 +62,7 @@ def write_svg(runs: list[dict], path: Path) -> None:
     for k in range(6):
         v = lo + (hi - lo) * k / 5
         parts.append(f'<line x1="{l}" x2="{W - r}" y1="{y(v):.1f}" y2="{y(v):.1f}" stroke="#e3e6ec"/>')
-        parts.append(f'<text x="{l - 8}" y="{y(v) + 4:.1f}" text-anchor="end" fill="#5b6170">{v:.1f}</text>')
+        parts.append(f'<text x="{l - 8}" y="{y(v) + 4:.1f}" text-anchor="end" fill="#5b6170">{v:.2f}</text>')
     for k in range(5):
         s = max_step * k / 4
         parts.append(f'<text x="{x(s):.1f}" y="{H - 18}" text-anchor="middle" fill="#5b6170">{int(s)}</text>')

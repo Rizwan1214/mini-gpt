@@ -13,6 +13,7 @@ Ye seekhne ke liye hai: har line ke saath Roman Urdu comments hain.
 | `sample.py` | Trained `model.pt` se text likhwana |
 | `tokenization.py` | Tokenizers: character, apna seekha hua BPE (shuru se), aur GPT-2 ka asli tokenizer. `python3 tokenization.py` BPE ke merges dikhata hai |
 | `compare_tokenizers.py` | Same model ko 5 tokenizers ke saath train karke muqabla |
+| `finetune.py` | Step 3: pretrained GPT-2 (124M) ko Shakespeare par fine-tune karna (partial fine-tuning + early stopping) |
 | `experiments.py` | Hyperparameters badal kar kai models train karna aur compare karna (table + chart, `--seeds` se shor bhi naapta hai) |
 | `data/input.txt` | Tiny Shakespeare (~1.1 MB), [karpathy/char-rnn](https://github.com/karpathy/char-rnn) se |
 
@@ -24,6 +25,7 @@ python3 bigram.py            # baseline, ~5 second
 python3 gpt.py               # GPT training, 3000 steps
 python3 sample.py --prompt "ROMEO:" --temp 0.8
 python3 gpt.py --tokenizer bpe1024   # BPE tokens ke saath train karo
+python3 finetune.py                  # pretrained GPT-2 ko fine-tune karo (~5 minute, CPU)
 ```
 
 Mac par khud Apple GPU (`mps`) use hota hai, NVIDIA par `cuda`, warna CPU.
@@ -123,6 +125,37 @@ Seekh:
    training ko ~20 guna dheema (608s) kar deta hai. Faida bpe1024 se sirf 0.015 hai, jo ek seed par shor bhi ho sakta hai.
    Chhote data aur model ke liye ~1000 tokens wala BPE sab se acha sauda hai.
 4. BPE models naam bhi tukron se jod kar banate hain (jaise `CAMARGUMBILKE`): naya token nahi, purane tukre naye tareeqe se.
+
+## Fine-tuning: pretrained GPT-2 vs shuru se
+
+Ab tak har model random weights se shuru hua. `finetune.py` OpenAI ka GPT-2 small (124M parameters, ~40GB
+internet text par trained) leta hai aur usay Shakespeare par thora aur sikhata hai. Poori report:
+[`experiments/finetune/results.md`](experiments/finetune/results.md).
+
+| Model | Val loss / char |
+|---|---|
+| Hamara sab se acha shuru se train kiya model (GPT-2 tokenizer, 13.7M) | 1.557 |
+| **GPT-2, bina fine-tuning (zero-shot)** | **1.458** |
+| GPT-2, 150 steps fine-tuning ke baad (sab se acha) | **1.194** |
+| GPT-2, 400 steps ke baad | 1.293 |
+
+![Fine-tuning ka val loss: step 150 par sab se kam, phir barhta hai](experiments/finetune/val_loss.svg)
+
+Seekh:
+
+1. **Pretraining sab se bada faida hai.** Shakespeare ka ek lafz dekhe baghair GPT-2 hamare har model se behtar tha.
+   Sirf 150 steps (~100 second) ne loss 1.458 → 1.194 kar diya. Industry isi liye shuru se train karne ki jagah fine-tune karti hai.
+2. **Partial fine-tuning.** 8 GB Mac par poore GPT-2 ki training memory ko swap mein dhakel deti thi (GPU par har step
+   1s → 4s → 20s). Is liye sirf aakhri 4/12 blocks train kiye (124M mein se 28.4M), baaki "freeze". Neeche ki layers
+   zabaan ki aam samajh rakhti hain, upar ki andaaz badalti hain. LoRA jaise tareeqe isi soch se nikle hain.
+3. **Overfitting aur early stopping.** Val loss step 150 ke baad barhne laga (1.194 → 1.293) jabke train loss girta raha:
+   model training wale dramon ke mutabiq zyada dhal gaya. `finetune.py` har eval par sab se acha model sambhalta hai aur
+   aakhir mein wahi wapas lagata hai (aur dobara naap kar check karta hai).
+4. **Loss sab kuch nahi batata.** Step 150 wala model loss mein sab se acha hai, lekin uske samples ab bhi aadhe internet
+   jaise hain. Step 400 wala zyada "Shakespeare jaisa" likhta tha (`ROMEO: … CISULUS: O God, what has he done to me?`)
+   lekin naye text par zyada galat tha. Andaaz ki nakal aur asli generalization alag cheezein hain.
+5. **Repetition loop.** Ek sample `CISABELLA:` baar baar dohrata atak gaya. Chhote models ki aam kamzori hai;
+   `repetition_penalty=1.2` (pehle aa chuke tokens ko thora kam pasand karna) se theek hota hai.
 
 ## Apne experiments
 

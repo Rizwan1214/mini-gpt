@@ -2,17 +2,17 @@
 <rect width="760" height="420" fill="#ffffff"/>
 <text x="52" y="14" font-weight="bold">Validation loss (kam = behtar)</text>
 <line x1="52" x2="570" y1="380.0" y2="380.0" stroke="#e3e6ec"/>
-<text x="44" y="384.0" text-anchor="end" fill="#5b6170">1.4</text>
+<text x="44" y="384.0" text-anchor="end" fill="#5b6170">1.40</text>
 <line x1="52" x2="570" y1="308.0" y2="308.0" stroke="#e3e6ec"/>
-<text x="44" y="312.0" text-anchor="end" fill="#5b6170">2.0</text>
+<text x="44" y="312.0" text-anchor="end" fill="#5b6170">1.99</text>
 <line x1="52" x2="570" y1="236.0" y2="236.0" stroke="#e3e6ec"/>
-<text x="44" y="240.0" text-anchor="end" fill="#5b6170">2.6</text>
+<text x="44" y="240.0" text-anchor="end" fill="#5b6170">2.58</text>
 <line x1="52" x2="570" y1="164.0" y2="164.0" stroke="#e3e6ec"/>
-<text x="44" y="168.0" text-anchor="end" fill="#5b6170">3.2</text>
+<text x="44" y="168.0" text-anchor="end" fill="#5b6170">3.18</text>
 <line x1="52" x2="570" y1="92.0" y2="92.0" stroke="#e3e6ec"/>
-<text x="44" y="96.0" text-anchor="end" fill="#5b6170">3.8</text>
+<text x="44" y="96.0" text-anchor="end" fill="#5b6170">3.77</text>
 <line x1="52" x2="570" y1="20.0" y2="20.0" stroke="#e3e6ec"/>
-<text x="44" y="24.0" text-anchor="end" fill="#5b6170">4.4</text>
+<text x="44" y="24.0" text-anchor="end" fill="#5b6170">4.36</text>
 <text x="52.0" y="402" text-anchor="middle" fill="#5b6170">0</text>
 <text x="181.5" y="402" text-anchor="middle" fill="#5b6170">375</text>
 <text x="311.0" y="402" text-anchor="middle" fill="#5b6170">750</text>

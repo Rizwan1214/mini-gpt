@@ -138,6 +138,9 @@ class GPT2Tokenizer:
             self.tok = GPT2TokenizerFast.from_pretrained("gpt2", local_files_only=True)
         except OSError:
             self.tok = GPT2TokenizerFast.from_pretrained("gpt2")
+        # Hum sirf poora text tokenize karte hain, GPT-2 model nahi chalate,
+        # is liye uski 1024-token hadd wali warning yahan bemaani hai.
+        self.tok.model_max_length = 10**9
 
     @property
     def vocab_size(self) -> int:

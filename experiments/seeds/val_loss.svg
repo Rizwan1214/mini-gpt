@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 420" font-family="sans-serif" font-size="12">
+<rect width="760" height="420" fill="#ffffff"/>
+<text x="52" y="14" font-weight="bold">Validation loss (kam = behtar)</text>
+<line x1="52" x2="570" y1="380.0" y2="380.0" stroke="#e3e6ec"/>
+<text x="44" y="384.0" text-anchor="end" fill="#5b6170">1.4</text>
+<line x1="52" x2="570" y1="308.0" y2="308.0" stroke="#e3e6ec"/>
+<text x="44" y="312.0" text-anchor="end" fill="#5b6170">2.0</text>
+<line x1="52" x2="570" y1="236.0" y2="236.0" stroke="#e3e6ec"/>
+<text x="44" y="240.0" text-anchor="end" fill="#5b6170">2.6</text>
+<line x1="52" x2="570" y1="164.0" y2="164.0" stroke="#e3e6ec"/>
+<text x="44" y="168.0" text-anchor="end" fill="#5b6170">3.2</text>
+<line x1="52" x2="570" y1="92.0" y2="92.0" stroke="#e3e6ec"/>
+<text x="44" y="96.0" text-anchor="end" fill="#5b6170">3.8</text>
+<line x1="52" x2="570" y1="20.0" y2="20.0" stroke="#e3e6ec"/>
+<text x="44" y="24.0" text-anchor="end" fill="#5b6170">4.4</text>
+<text x="52.0" y="402" text-anchor="middle" fill="#5b6170">0</text>
+<text x="181.5" y="402" text-anchor="middle" fill="#5b6170">375</text>
+<text x="311.0" y="402" text-anchor="middle" fill="#5b6170">750</text>
+<text x="440.5" y="402" text-anchor="middle" fill="#5b6170">1125</text>
+<text x="570.0" y="402" text-anchor="middle" fill="#5b6170">1500</text>
+<text x="311" y="418" text-anchor="middle" fill="#5b6170">step</text>
+<polyline points="52.0,21.3 103.8,256.1 155.6,282.9 207.4,296.6 259.2,305.8 311.0,312.3 362.8,319.0 414.6,323.2 466.4,326.0 518.2,329.7 570.0,332.2" fill="none" stroke="#14161c" stroke-width="3"/>
+<line x1="584" x2="604" y1="30" y2="30" stroke="#14161c" stroke-width="3"/>
+<text x="610" y="34">baseline (1.79)</text>
+<polyline points="52.0,21.3 103.8,260.2 155.6,289.5 207.4,303.2 259.2,312.2 311.0,320.2 362.8,326.8 414.6,331.1 466.4,334.5 518.2,337.9 570.0,339.8" fill="none" stroke="#d9480f" stroke-width="1.8"/>
+<line x1="584" x2="604" y1="50" y2="50" stroke="#d9480f" stroke-width="3"/>
+<text x="610" y="54">no_dropout (1.73)</text>
+<polyline points="52.0,20.0 103.8,258.1 155.6,285.5 207.4,300.8 259.2,308.2 311.0,315.4 362.8,321.3 414.6,325.1 466.4,330.6 518.2,331.9 570.0,336.0" fill="none" stroke="#1971c2" stroke-width="1.8"/>
+<line x1="584" x2="604" y1="70" y2="70" stroke="#1971c2" stroke-width="3"/>
+<text x="610" y="74">layers_6 (1.76)</text>
+<polyline points="52.0,21.3 103.8,262.5 155.6,289.8 207.4,302.9 259.2,309.8 311.0,314.6 362.8,320.8 414.6,322.8 466.4,326.5 518.2,328.3 570.0,329.8" fill="none" stroke="#c2255c" stroke-width="1.8"/>
+<line x1="584" x2="604" y1="90" y2="90" stroke="#c2255c" stroke-width="3"/>
+<text x="610" y="94">lr_high (1.81)</text>
+</svg>

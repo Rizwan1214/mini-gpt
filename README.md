@@ -11,7 +11,7 @@ Ye seekhne ke liye hai: har line ke saath Roman Urdu comments hain.
 | `bigram.py` | Step 1: sab se simple model, attention ke baghair. Iska loss baseline hai |
 | `gpt.py` | Step 2: asli transformer (embeddings → 4 blocks [LayerNorm → causal multi-head attention → MLP, residuals] → logits) aur training loop |
 | `sample.py` | Trained `model.pt` se text likhwana |
-| `experiments.py` | Hyperparameters badal kar kai models train karna aur compare karna (table + chart) |
+| `experiments.py` | Hyperparameters badal kar kai models train karna aur compare karna (table + chart, `--seeds` se shor bhi naapta hai) |
 | `data/input.txt` | Tiny Shakespeare (~1.1 MB), [karpathy/char-rnn](https://github.com/karpathy/char-rnn) se |
 
 ## Chalana
@@ -59,13 +59,31 @@ Zyada steps aur bada model is ko aur behtar karte hain.
 | `no_dropout` | 1.731 | −0.065 | Itni chhoti training mein model abhi overfit nahi hota, is liye dropout sirf seekhna dheema karta hai. Lambi training ya bade model mein ye faida deta hai |
 | `layers_6` | 1.769 | −0.028 | Gehra model thora behtar hai, lekin 22% zyada waqt leta hai |
 | `baseline` | 1.796 | – | 4 layers, d=128, context 64, dropout 0.1, lr 1e-3 |
-| `lr_high` (1e-2) | 1.837 | +0.040 | Zyada LR se nuksaan hua, lekin Adam ki wajah se model phata nahi |
+| `lr_high` (1e-2) | 1.837 | +0.040 | Zyada LR se nuksaan dikha, lekin 3 seeds par ye farq shor nikla (neeche dekho) |
 | `layers_2` | 1.870 | +0.074 | Kam gehrai = kam samajh |
 | `context_16` | 1.958 | +0.162 | Sirf 16 characters ka context: lafz aur lines ka andaaz pakadna mushkil |
 | `lr_low` (1e-4) | 2.305 | +0.509 | Bohat dheema: 1500 steps mein abhi seekh hi raha hai (curve ab bhi neeche ja rahi hai) |
 | `no_attention` | 2.496 | +0.699 | **Attention ke baghair model bigram (2.49) jitna hi reh jata hai.** Har token sirf khud ko dekhta hai, is liye MLP bhi pichle text se kuch nahi seekh sakta. Transformer ki asli taqat attention hai |
 
-Note: har experiment ek hi seed se chala hai. ~0.03 se kam farq shor (noise) bhi ho sakta hai.
+Note: ye table ek hi seed se hai. Neeche wala seeds experiment batata hai kaunse farq pakke hain.
+
+### Kaunse farq asli hain? (3 seeds)
+
+`python3 experiments.py --seeds 3 --only baseline no_dropout layers_6 lr_high --out-dir experiments/seeds`
+har experiment ko 3 alag seeds (alag shuruaati weights aur batches) se chalata hai.
+Poori table: [`experiments/seeds/results.md`](experiments/seeds/results.md).
+
+| Experiment | Val loss (mean ± std) | vs baseline | Pakka? |
+|---|---|---|---|
+| `no_dropout` | 1.730 ± 0.001 | −0.062 | haan |
+| `layers_6` | 1.761 ± 0.007 | −0.031 | haan |
+| `baseline` | 1.793 ± 0.006 | – | – |
+| `lr_high` | 1.813 ± 0.009 | +0.020 | shayad shor |
+
+- Seed badalne se hi val loss ~0.006 tak hil jata hai. Is se chhota farq kuch sabit nahi karta.
+- `no_dropout` aur `layers_6` ka faida asli hai: shor se kai guna bada.
+- `lr_high` ka nuksaan ek seed par +0.040 dikha tha, lekin 3 seeds ka average sirf +0.020 hai, jo shor ke andar hai.
+  Seekh: **ek run se nateeja mat nikalo.** Asli research mein isi liye kai seeds chalaye jaate hain.
 
 ## Apne experiments
 
